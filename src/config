@@ -1,0 +1,11 @@
+{
+	"path_to_saved_model": "saved_model.json",
+	"path_to_saved_weights": "saved_weights.h5",
+	"path_to_npz": "../../Data/fer2013/fer2013.npz",
+	"path_to_save_debug_convoluted_images_to": "../../Data/fer2013/debug/convolutionimages",
+	"epochs": "40",
+	"augmentation": "True",
+	"augmentation_factor": "6.0",
+	"learn_rate": "0.01",
+	"batch_size": "64"
+}
