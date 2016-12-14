@@ -4,7 +4,7 @@ Authors: Christoph Koerner, Patrick Wahrmann
 import os.path as fs
 import timeit
 
-from dataset import ImdbWikiAgeDataset as Dataset
+from dataset import TinyImdbWikiAgeDataset as Dataset
 from dataset import *
 from transformation import get_normalization_transform
 from MiniBatchGenerator import *
@@ -15,10 +15,10 @@ from keras.utils import np_utils
 
 
 # Configurations
-n_epochs = 200
-train_batchsize = 5
-val_batchsize = 5
-test_batchsize = 5
+n_epochs = 100
+train_batchsize = 1
+val_batchsize = 1
+test_batchsize = 1
 momentum = 0.9
 learning_rate = 0.001
 decay = 0.0001

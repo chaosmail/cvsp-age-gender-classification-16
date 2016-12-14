@@ -85,7 +85,7 @@ def get_img_array(meta_data, img_dim=(3,224,224), split=0, num_samples_per_split
   y_age = np.zeros((num_samples))
   y_gender = np.zeros((num_samples))
   
-  print('Allocating %s for dataset with shape (%i,%i,%i,%i)' %
+  print('  Allocating %s for dataset with shape (%i,%i,%i,%i)' %
     (sizeof_fmt(X.nbytes), num_samples, img_dim[0], img_dim[1], img_dim[2]))
   
   age_class = lambda x: age_classes.index(next(filter(lambda e: x >= e[0] and x <= e[1], age_classes)))
@@ -97,7 +97,7 @@ def get_img_array(meta_data, img_dim=(3,224,224), split=0, num_samples_per_split
     
     with Image.open(abspath) as img:
       img = img.resize(img_dim[1:3], RESIZE_TYPE).convert('RGB')
-      X[i - i_start] = np.asarray(img, dtype=dtype).reshape((img_dim)) / 255
+      X[i - i_start] = np.flipud(np.asarray(img, dtype=dtype).reshape((img_dim)) / 255)
   
   return X, y_age, y_gender
 

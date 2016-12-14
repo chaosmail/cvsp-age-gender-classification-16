@@ -40,7 +40,7 @@ def print_summary(dataset_name, sets):
 # the dataset is in the directory
 DATASET_DIR = '../data/packaged'
 
-from dataset import ImdbWikiAgeDataset as Dataset
+from dataset import TinyImdbWikiAgeDataset as Dataset
 
 # Print a summary of the dataset
 print_summary(Dataset.__class__.__name__, [
@@ -50,7 +50,7 @@ print_summary(Dataset.__class__.__name__, [
 ])
 
 
-from dataset import ImdbWikiGenderDataset as Dataset
+from dataset import TinyImdbWikiGenderDataset as Dataset
 
 # Print a summary of the dataset
 print_summary(Dataset.__class__.__name__, [
