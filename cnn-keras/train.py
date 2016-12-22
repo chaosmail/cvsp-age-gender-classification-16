@@ -20,9 +20,9 @@ n_epochs = 100
 train_batchsize = 25
 val_batchsize = 25
 test_batchsize = 25
-momentum = 0.9
+
 learning_rate = 0.001
-decay = 1e-7
+decay = 0.0
 early_stopping_rounds = 10
 
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")

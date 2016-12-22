@@ -64,7 +64,7 @@ def train(model, mb_train, mb_val, n_epochs, best_model_path, logs_path, early_s
       break
 
   # Save the logs to disk
-  np.save('logs/%s' % logs_path, logs)
+  np.save(logs_path, logs)
 
 def test(model, mb_test):
 
