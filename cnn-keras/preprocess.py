@@ -10,8 +10,8 @@ try:
 except:
   import pickle
 
-DATA_SRC = '/mnt/s3/datastore'
-DATA_DST = '/home/ec2-user/data'
+DATA_SRC = '/mnt/s3/datastore/imdb-wiki-dataset'
+DATA_DST = '/data/packaged'
 
 WIKI_CROPS_DIR = "wiki_crop"
 IMDB_CROPS_DIR = "imdb_crop"
@@ -24,7 +24,7 @@ VAL_DATA_OBJ = 'val_data'
 TEST_DATA_OBJ = 'test_data'
 
 # Define the number of samples per split
-SAMPLES_PER_SPLIT = 100000
+SAMPLES_PER_SPLIT = 50000
 INPUT_DIM = (3,112,112)
 
 TRAIN_TEST_SPLIT = 0.8
@@ -95,9 +95,14 @@ def get_img_array(meta_data, img_dim=(3,224,224), split=0, num_samples_per_split
     y_gender[i - i_start] = meta_data['gender'][i]
     abspath = fs.join(DATA_SRC, meta_data['path'][i])
     
-    with Image.open(abspath) as img:
-      img = img.resize(img_dim[1:3], RESIZE_TYPE).convert('RGB')
-      X[i - i_start] = np.flipud(np.asarray(img, dtype=dtype).reshape((img_dim)) / 255)
+    # Catch errors
+    try:
+      with Image.open(abspath) as img:
+        img = img.resize(img_dim[1:3], RESIZE_TYPE).convert('RGB')
+        X[i - i_start] = np.flipud(np.asarray(img, dtype=dtype).reshape((img_dim)) / 255)
+    except OSError as e:
+      print("Error reading file %s" % abspath)
+      continue
   
   return X, y_age, y_gender
 

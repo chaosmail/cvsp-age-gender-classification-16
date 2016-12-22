@@ -12,26 +12,38 @@ class ImdbWikiDataset(ImageDataset):
     self.data = self.load_data()
     self.labels = []
     self.label_names = []
+    self.train_blocks = 5
+    self.test_blocks = 2
  
   def load_data(self, i=0):
-    # TODO: read in all parts
     if self.split == 'train':
-      # 0 - 9
-      return np.load(fs.join(self.fdir, self.split + '_data_%02d.npy' % i))
+      data = None
+      for i in range(self.train_blocks):
+        block = np.load(fs.join(self.fdir, self.split + '_data_%02d.npy' % i))
+        data = block if data is None else np.concatenate((data, block), axis=0)
+      return data
     elif self.split == 'test':
-      # 0 - 2
-      return np.load(fs.join(self.fdir, self.split + '_data_%02d.npy' % i))
+      data = None
+      for i in range(self.test_blocks):
+        block = np.load(fs.join(self.fdir, self.split + '_data_%02d.npy' % i))
+        data = block if data is None else np.concatenate((data, block), axis=0)
+      return data
     else:
       return np.load(fs.join(self.fdir, self.split + '_data.npy'))
 
   def load_labels(self, label_str, i=0):
-    # TODO: read in all parts
     if self.split == 'train':
-      # 0 - 9
-      return np.load(fs.join(self.fdir, self.split + '_data_label_%s_%02d.npy' % (label_str, i)))
+      meta = None
+      for i in range(self.train_blocks):
+        block = np.load(fs.join(self.fdir, self.split + '_data_label_%s_%02d.npy' % (label_str, i)))
+        meta = block if meta is None else np.concatenate((meta, block), axis=0)
+      return meta
     elif self.split == 'test':
-      # 0 - 2
-      return np.load(fs.join(self.fdir, self.split + '_data_label_%s_%02d.npy' % (label_str, i)))
+      meta = None
+      for i in range(self.train_blocks):
+        block = np.load(fs.join(self.fdir, self.split + '_data_label_%s_%02d.npy' % (label_str, i)))
+        meta = block if meta is None else np.concatenate((meta, block), axis=0)
+      return meta
     else:
       return np.load(fs.join(self.fdir, self.split + '_data_label_%s.npy' % (label_str)))
 

@@ -4,7 +4,7 @@ Student-ID: 0726266
 
 Recap: Test with the corrected abstract classes
 """
-import os.path as fs
+import fs
 import numpy as np
 from PIL import Image
 
@@ -33,7 +33,7 @@ def print_summary(dataset_name, sets):
 
   for s in sets:
     data = s.sample(sid) * 255
-    img = Image.fromarray(data.reshape((112,112,3)).astype(np.uint8))
+    img = Image.fromarray(data.reshape((48,48,3)).astype(np.uint8))
     img.save('%s_%s_sample#%i.png' % (dataset_name, s.split, sid))
 
 
@@ -43,7 +43,7 @@ DATASET_DIR = '../data/packaged'
 from dataset import TinyImdbWikiAgeDataset as Dataset
 
 # Print a summary of the dataset
-print_summary(Dataset.__class__.__name__, [
+print_summary('TinyImdbWikiAgeDataset', [
   Dataset(DATASET_DIR, 'train'),
   Dataset(DATASET_DIR, 'val'),
   Dataset(DATASET_DIR, 'test')
@@ -53,7 +53,7 @@ print_summary(Dataset.__class__.__name__, [
 from dataset import TinyImdbWikiGenderDataset as Dataset
 
 # Print a summary of the dataset
-print_summary(Dataset.__class__.__name__, [
+print_summary('TinyImdbWikiGenderDataset', [
   Dataset(DATASET_DIR, 'train'),
   Dataset(DATASET_DIR, 'val'),
   Dataset(DATASET_DIR, 'test')

@@ -38,8 +38,11 @@ class PerChannelSubtractionImageTransformation(SampleTransformation):
     # sample must be a 3D tensor with shape [rows,cols,c].
     # The sample datatype must be single-precision float.
     
-    # Numpy will expand the correct dimensions automatically
-    return sample - self._values
+    sample[0] -= self._values[0]
+    sample[1] -= self._values[1]
+    sample[2] -= self._values[2]
+    
+    return sample
 
   def values(self):
     # Return the subtracted values.
