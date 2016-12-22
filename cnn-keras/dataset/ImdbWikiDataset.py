@@ -9,11 +9,11 @@ class ImdbWikiDataset(ImageDataset):
   def __init__(self, fdir, split):
     self.fdir = fdir
     self.split = split
-    self.data = self.load_data()
     self.labels = []
     self.label_names = []
     self.train_blocks = 5
     self.test_blocks = 2
+    self.data = self.load_data()
  
   def load_data(self, i=0):
     if self.split == 'train':

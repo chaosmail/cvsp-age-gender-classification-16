@@ -29,11 +29,11 @@ timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
 MODEL_NAME = 'VGG_16_AGE_3_48_48'
 
-DATASET_DIR = '../data/packaged'
+DATASET_DIR = '../data/imdb-wiki-tiny-dataset'
 MODEL_DIR = '../data/models'
 LOGS_DIR = '../data/logs'
 
-MODEL_PATH = fs.join(MODEL_DIR, '%s_%s.hp5' % (MODEL_NAME, timestamp))
+MODEL_PATH = fs.join(MODEL_DIR, '%s_%s.h5' % (MODEL_NAME, timestamp))
 LOGS_PATH = fs.join(LOGS_DIR, '%s_%s.txt' % (MODEL_NAME, timestamp))
 
 print("Loading %s ..." % Dataset.__class__.__name__)

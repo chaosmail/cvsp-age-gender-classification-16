@@ -11,8 +11,8 @@ from PIL import Image
 # Helper function to return the length of a filter
 len_filter = lambda f, l: len(list(filter(f, l)))
 
-def print_summary(dataset_name, sets):
-  print("Summary of %s", dataset_name)
+def print_summary(dataset_name, sets, dims=(112,112,3), sid=110):
+  print("\nSummary of %s", dataset_name)
 
   for s in sets:
     print("[%s] %i classes, name of class #1: %s" 
@@ -24,8 +24,6 @@ def print_summary(dataset_name, sets):
       print(" Class #%i: %i samples" %
         (lid, s.samples()[s.classes() == lid].shape[0]))
 
-  sid = 499
-
   print()
   for s in sets:
     print("[%s] Sample #%i: %s" %
@@ -33,12 +31,36 @@ def print_summary(dataset_name, sets):
 
   for s in sets:
     data = s.sample(sid) * 255
-    img = Image.fromarray(data.reshape((48,48,3)).astype(np.uint8))
+    img = Image.fromarray(data.reshape(dims).astype(np.uint8))
     img.save('%s_%s_sample#%i.png' % (dataset_name, s.split, sid))
 
 
+# # the dataset is in the directory
+# DATASET_DIR = '../data/imdb-wiki-dataset'
+
+# from dataset import ImdbWikiAgeDataset as Dataset
+
+# # Print a summary of the dataset
+# print_summary('ImdbWikiAgeDataset', [
+#   Dataset(DATASET_DIR, 'train'),
+#   Dataset(DATASET_DIR, 'val'),
+#   Dataset(DATASET_DIR, 'test')
+# ])
+
+
+# from dataset import ImdbWikiGenderDataset as Dataset
+
+# # Print a summary of the dataset
+# print_summary('ImdbWikiGenderDataset', [
+#   Dataset(DATASET_DIR, 'train'),
+#   Dataset(DATASET_DIR, 'val'),
+#   Dataset(DATASET_DIR, 'test')
+# ])
+
+# print('\n')
+
 # the dataset is in the directory
-DATASET_DIR = '../data/packaged'
+DATASET_DIR = '../data/imdb-wiki-tiny-dataset'
 
 from dataset import TinyImdbWikiAgeDataset as Dataset
 
@@ -47,7 +69,7 @@ print_summary('TinyImdbWikiAgeDataset', [
   Dataset(DATASET_DIR, 'train'),
   Dataset(DATASET_DIR, 'val'),
   Dataset(DATASET_DIR, 'test')
-])
+], dims=(48,48,3))
 
 
 from dataset import TinyImdbWikiGenderDataset as Dataset
@@ -57,4 +79,4 @@ print_summary('TinyImdbWikiGenderDataset', [
   Dataset(DATASET_DIR, 'train'),
   Dataset(DATASET_DIR, 'val'),
   Dataset(DATASET_DIR, 'test')
-])
+], dims=(48,48,3))
