@@ -168,3 +168,28 @@ def load_meta_data(data_src, wiki_src, imdb_src):
     imdb_meta = pickle.load(file)
   
   return merge_meta_data(imdb_meta, wiki_meta)
+
+
+# [sudo] pip3 install quiver_engine
+def visualise_with_quiver(model, input_images='../data/imdb-wiki-tiny-dataset', class_type='age'):
+  classes = ['1-15', '16-20', '21-25', '26-30', '31-35', '36-40', '40-45', '46-50', '51-55', '56-100']
+  if class_type != 'age':
+    classes = ['female', 'male']
+
+  from quiver_engine import server
+  server.launch(
+    model,  # a Keras Model
+
+    classes,  # list of output classes from the model to present (if not specified 1000 ImageNet classes will be used)
+
+    5,  # number of top predictions to show in the gui (default 5)
+
+    # where to store temporary files generatedby quiver (e.g. image files of layers)
+    temp_folder='./tmp',
+
+    # a folder where input images are stored
+    input_folder=input_images,
+
+    # the localhost port the dashboard is to be served on
+    port=5000
+  )

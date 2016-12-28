@@ -39,6 +39,9 @@ print(" [%s] %i samples, %i minibatches of size %i" % (
 # Load latest model
 latest_model = max( fs.find('*.h5', path=MODEL_DIR), key=fs.ctime)
 
+# Visualize model
+utils.visualise_with_quiver(load_model(latest_model), DATASET_DIR, class_type='age')
+
 # Test best model
 print("Testing model %s on test set ..." % latest_model)
 utils.test(load_model(latest_model), mb_test)

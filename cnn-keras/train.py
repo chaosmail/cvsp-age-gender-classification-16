@@ -76,6 +76,8 @@ model.compile(
   metrics=['accuracy']
 )
 
+utils.visualise_with_quiver(model, DATASET_DIR, class_type='age')
+
 # Train model
 print("Training for %i epochs ..." % n_epochs)
 utils.train(model, mb_train, mb_val, n_epochs,
