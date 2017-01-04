@@ -89,4 +89,4 @@ class ImdbWikiDataset(ImageDataset):
     return self.data
 
   def classes(self):
-    return self.labels
+    return self.labels.astype(int)

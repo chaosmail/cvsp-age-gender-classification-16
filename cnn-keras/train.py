@@ -4,30 +4,30 @@ Authors: Christoph Koerner, Patrick Wahrmann
 import fs
 import datetime
 
-from dataset import TinyImdbWikiAgeDataset as Dataset
+from dataset import TinyImdbWikiGenderDataset as Dataset
 from transformation import get_normalization_transform
 from MiniBatchGenerator import MiniBatchGenerator
 
 from keras.models import load_model
-from keras.optimizers import SGD, Adam
+from keras.optimizers import SGD, Adam, RMSprop
 
 import utils
 import models
 
 
 # Configurations
-n_epochs = 100
-train_batchsize = 25
-val_batchsize = 25
-test_batchsize = 25
+n_epochs = 40
+train_batchsize = 40
+val_batchsize = 40
+test_batchsize = 40
 
-learning_rate = 0.001
-decay = 0.0
+learning_rate = 0.005
+decay_rate = 0.999
 early_stopping_rounds = 10
 
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
-MODEL_NAME = 'VGG_16_AGE_3_48_48'
+MODEL_NAME = 'SIMPLE_CNN_GENDER_3_48_48'
 
 DATASET_DIR = '../data/imdb-wiki-tiny-dataset'
 MODEL_DIR = '../data/models'
@@ -60,10 +60,18 @@ print(" [%s] %i samples, %i minibatches of size %i" % (
 
 # Load the model
 print("Initializing model %s ..." % MODEL_NAME)
-model = models.get_vgg16(input_shape=(3,48,48), n_classes=10)
+model = models.get_simple_cnn(
+  input_shape=(3,48,48),
+  n_classes=2,
+  init='glorot_normal'
+)
 
 # Initialize optimizer
-opt = Adam(lr=learning_rate, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=decay)
+opt = RMSprop(lr=learning_rate, rho=0.9, epsilon=1e-08, decay=decay_rate)
+print("Initializing %s optimizer ..." % opt.__class__.__name__)
+print(" [learning_rate]: %f" % learning_rate)
+print(" [rho]: %f" % 0.9)
+print(" [decay_rate]: %f" % decay_rate)
 
 model.compile(
   # Multi class classification loss

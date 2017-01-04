@@ -2,7 +2,10 @@
 Author: Christoph Koerner
 Student-ID: 0726266
 """
+from multiprocessing import Process, Queue
+import itertools
 import numpy as np
+import matplotlib.pyplot as plt
 import timeit
 
 try:
@@ -48,14 +51,14 @@ def train(model, mb_train, mb_val, n_epochs, best_model_path, logs_path, early_s
       X_batch, y, ids = mb_train.batch(i)
       Y_batch = np_utils.to_categorical(y, mb_train.dataset.nclasses())
       model.train_on_batch(X_batch, Y_batch)
-      loss_and_metrics = model.evaluate(X_batch, Y_batch, batch_size=len(X_batch), verbose=0)
+      loss_and_metrics = model.test_on_batch(X_batch, Y_batch)
       train_loss[i] = loss_and_metrics[0]
       train_acc[i] = loss_and_metrics[1]
 
     for i in range(mb_val.nbatches()):
       X_val, y, ids = mb_val.batch(i)
       Y_val = np_utils.to_categorical(y, mb_val.dataset.nclasses())
-      loss_and_metrics = model.evaluate(X_val, Y_val, batch_size=len(X_val), verbose=0)
+      loss_and_metrics = model.test_on_batch(X_val, Y_val)
       val_loss[i] = loss_and_metrics[0]
       val_acc[i] = loss_and_metrics[1]
 
@@ -116,17 +119,19 @@ def get_img_array(meta_data, data_src, age_classes, img_dim=(3,224,224), split=0
     (sizeof_fmt(X.nbytes), num_samples, img_dim[0], img_dim[1], img_dim[2]))
   
   age_class = lambda x: age_classes.index(next(filter(lambda e: x >= e[0] and x <= e[1], age_classes)))
-  
+
   for i in range(i_start, i_stop):
     y_age[i - i_start] = age_class(meta_data['age'][i])
-    y_gender[i - i_start] = meta_data['gender'][i]
+
+    # Replace all non valid gender labels with male labels
+    y_gender[i - i_start] = meta_data['gender'][i] if int(meta_data['gender'][i]) in [0, 1] else 1
     abspath = fs.join(data_src, meta_data['path'][i])
 
     # Catch errors
     try:
       with Image.open(abspath) as img:
         img = img.resize(img_dim[1:3], RESIZE_TYPE).convert('RGB')
-        X[i - i_start] = np.asarray(img, dtype=dtype).reshape((img_dim)) / 255
+        X[i - i_start] = np.asarray(img, dtype=dtype).transpose((2,1,0)) / 255
     except OSError as e:
       print("Error reading file %s" % abspath)
       continue
@@ -169,7 +174,6 @@ def load_meta_data(data_src, wiki_src, imdb_src):
   
   return merge_meta_data(imdb_meta, wiki_meta)
 
-
 # [sudo] pip3 install quiver_engine
 def visualise_with_quiver(model, input_images='../data/imdb-wiki-tiny-dataset', class_type='age'):
   classes = ['1-15', '16-20', '21-25', '26-30', '31-35', '36-40', '40-45', '46-50', '51-55', '56-100']
@@ -193,3 +197,54 @@ def visualise_with_quiver(model, input_images='../data/imdb-wiki-tiny-dataset', 
     # the localhost port the dashboard is to be served on
     port=5000
   )
+
+def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues, figsize=(10,10)):
+  """
+  This function prints and plots the confusion matrix.
+  Normalization can be applied by setting `normalize=True`.
+  """
+  if normalize:
+    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+      
+  plt.figure(figsize=figsize)
+  plt.imshow(cm, interpolation='nearest', cmap=cmap)
+  plt.title(title)
+  plt.colorbar()
+  tick_marks = np.arange(len(classes))
+  plt.xticks(tick_marks, classes, rotation=45)
+  plt.yticks(tick_marks, classes)
+
+  thresh = cm.max() / 2.
+  for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    plt.text(j, i, '%.2f' % cm[i, j],
+             horizontalalignment="center",
+             color="white" if cm[i, j] > thresh else "black")
+
+  plt.tight_layout()
+  plt.ylabel('True label')
+  plt.xlabel('Predicted label')
+
+def get_class_weight(labels, y):
+  class_perc = {}
+  for i in range(len(labels)):
+      class_perc[i] = np.sum(y == i) / len(y)
+
+  class_weights = {}
+  class_sorted = sorted(class_perc, reverse=True)
+  for i in class_sorted:
+      class_weights[i] = class_perc[class_sorted[0]] / class_perc[i]
+
+  return class_weights
+
+def run_in_separate_process(method, args):
+    def queue_wrapper(q, params):
+        r = method(*params)
+        q.put(r)
+
+    q = Queue()
+    p = Process(target=queue_wrapper, args=(q, args))
+    p.start()
+    return_val = q.get()
+    p.join()
+    return return_val
+

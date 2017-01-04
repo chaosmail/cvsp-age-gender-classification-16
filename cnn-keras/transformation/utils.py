@@ -1,13 +1,15 @@
 from .FloatCastTransformation import *
 from .ResizeTransformation import *
+from .MultiplyTransformation import *
 from .TransformationSequence import *
+from .TransposeTransformation import *
 from .PerChannelSubtractionImageTransformation import *
 from .PerChannelDivisionImageTransformation import *
 from .ReshapeTransformation import *
 from .GrayscaleTransformation import *
 
 
-def get_normalization_transform(means=None, stds=None, resize_to=None, reshape_to=None, grayscale=False):
+def get_normalization_transform(means=None, stds=None, resize_to=None, transpose_to=None, reshape_to=None, grayscale=False, scale_to=None):
   print(" Initializing Transformations")
   tform = TransformationSequence()
 
@@ -34,6 +36,16 @@ def get_normalization_transform(means=None, stds=None, resize_to=None, reshape_t
     t = GrayscaleTransformation()
     tform.add_transformation(t)
     print("  %s" % (t.__class__.__name__))
+
+  if scale_to is not None:
+    t = MultiplyTransformation(scale_to)
+    tform.add_transformation(t)
+    print("  %s %s" % (t.__class__.__name__, str(t.value())))    
+
+  if transpose_to is not None:
+    t = TransposeTransformation(transpose_to)
+    tform.add_transformation(t)
+    print("  %s %s" % (t.__class__.__name__, str(t.value())))
 
   if reshape_to is not None:
     t = ReshapeTransformation(reshape_to)
