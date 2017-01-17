@@ -1,0 +1,4 @@
+git+https://github.com/chaosmail/pyprind
+pyfs
+jupyter
+keras
