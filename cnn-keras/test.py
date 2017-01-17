@@ -17,7 +17,7 @@ test_batchsize = 25
 DATASET_DIR = '../data/imdb-wiki-tiny-dataset'
 MODEL_DIR = '../data/models'
 
-print("Loading %s ..." % Dataset.__class__.__name__)
+print("Loading %s ..." % type(Dataset).__name__)
 # Initialize the datasets
 ds_train = Dataset(DATASET_DIR, 'train')
 ds_test = Dataset(DATASET_DIR, 'test')
@@ -27,7 +27,6 @@ print("Setting up preprocessing ...")
 tform = get_normalization_transform(
   means=ds_train.get_mean(per_channel=True),
   stds=ds_train.get_stddev(per_channel=True),
-  # scale_to=255
 )
 
 # Initialize the MiniBatch generators

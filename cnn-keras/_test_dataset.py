@@ -11,7 +11,10 @@ from PIL import Image
 # Helper function to return the length of a filter
 len_filter = lambda f, l: len(list(filter(f, l)))
 
-def print_summary(dataset_name, sets, dims=(112,112,3), sid=110):
+def flip(X):
+  return X.transpose((2,1,0))
+
+def print_summary(dataset_name, sets, sid=110):
   print("\nSummary of %s", dataset_name)
 
   for s in sets:
@@ -31,7 +34,7 @@ def print_summary(dataset_name, sets, dims=(112,112,3), sid=110):
 
   for s in sets:
     data = s.sample(sid) * 255
-    img = Image.fromarray(data.reshape(dims).astype(np.uint8))
+    img = Image.fromarray(flip(data).astype(np.uint8))
     img.save('%s_%s_sample#%i.png' % (dataset_name, s.split, sid))
 
 
@@ -69,7 +72,7 @@ print_summary('TinyImdbWikiAgeDataset', [
   Dataset(DATASET_DIR, 'train'),
   Dataset(DATASET_DIR, 'val'),
   Dataset(DATASET_DIR, 'test')
-], dims=(48,48,3))
+])
 
 
 from dataset import TinyImdbWikiGenderDataset as Dataset
@@ -79,4 +82,4 @@ print_summary('TinyImdbWikiGenderDataset', [
   Dataset(DATASET_DIR, 'train'),
   Dataset(DATASET_DIR, 'val'),
   Dataset(DATASET_DIR, 'test')
-], dims=(48,48,3))
+])

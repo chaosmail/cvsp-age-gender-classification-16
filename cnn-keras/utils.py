@@ -5,7 +5,6 @@ Student-ID: 0726266
 from multiprocessing import Process, Queue
 import itertools
 import numpy as np
-import matplotlib.pyplot as plt
 import timeit
 
 try:
@@ -23,6 +22,8 @@ import fs
 # PIL.Image.BICUBIC - cubic spline interpolation
 RESIZE_TYPE = PIL.Image.LANCZOS
 
+def flip(X):
+  return X.transpose((0,3,2,1))
 
 def train(model, mb_train, mb_val, n_epochs, best_model_path, logs_path, early_stopping_rounds=-1):
   from keras.utils import np_utils
@@ -65,6 +66,7 @@ def train(model, mb_train, mb_val, n_epochs, best_model_path, logs_path, early_s
     stop = timeit.default_timer()
 
     logs[epoch] = np.array([train_loss.mean(), train_acc.mean(), val_loss.mean(), val_acc.mean()])
+    np.save(logs_path, logs)
 
     print(" [Epoch %03d] duration: %.1fs, loss: %.3f, training accuracy: %.3f, validation accuracy: %.3f" % (
       epoch, stop - start, train_loss.mean(), train_acc.mean(), val_acc.mean()))
@@ -83,7 +85,7 @@ def train(model, mb_train, mb_val, n_epochs, best_model_path, logs_path, early_s
   # Save the logs to disk
   np.save(logs_path, logs)
 
-def test(model, mb_test):
+def test(model, mb_test, verbose=0):
   from keras.utils import np_utils
 
   # Test the global best model
@@ -93,7 +95,7 @@ def test(model, mb_test):
   for i in range(mb_test.nbatches()):
     X_test, y, ids = mb_test.batch(i)
     Y_test = np_utils.to_categorical(y, mb_test.dataset.nclasses())
-    loss_and_metrics = model.evaluate(X_test, Y_test, batch_size=len(X_test), verbose=0)
+    loss_and_metrics = model.evaluate(X_test, Y_test, batch_size=len(X_test), verbose=verbose)
     test_loss[i] = loss_and_metrics[0]
     test_acc[i] = loss_and_metrics[1]
 
@@ -198,32 +200,6 @@ def visualise_with_quiver(model, input_images='../data/imdb-wiki-tiny-dataset', 
     port=5000
   )
 
-def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues, figsize=(10,10)):
-  """
-  This function prints and plots the confusion matrix.
-  Normalization can be applied by setting `normalize=True`.
-  """
-  if normalize:
-    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-      
-  plt.figure(figsize=figsize)
-  plt.imshow(cm, interpolation='nearest', cmap=cmap)
-  plt.title(title)
-  plt.colorbar()
-  tick_marks = np.arange(len(classes))
-  plt.xticks(tick_marks, classes, rotation=45)
-  plt.yticks(tick_marks, classes)
-
-  thresh = cm.max() / 2.
-  for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-    plt.text(j, i, '%.2f' % cm[i, j],
-             horizontalalignment="center",
-             color="white" if cm[i, j] > thresh else "black")
-
-  plt.tight_layout()
-  plt.ylabel('True label')
-  plt.xlabel('Predicted label')
-
 def get_class_weight(labels, y):
   class_perc = {}
   for i in range(len(labels)):
@@ -237,14 +213,19 @@ def get_class_weight(labels, y):
   return class_weights
 
 def run_in_separate_process(method, args):
-    def queue_wrapper(q, params):
-        r = method(*params)
-        q.put(r)
+  def queue_wrapper(q, params):
+    r = method(*params)
+    q.put(r)
 
-    q = Queue()
-    p = Process(target=queue_wrapper, args=(q, args))
-    p.start()
-    return_val = q.get()
-    p.join()
-    return return_val
+  q = Queue()
+  p = Process(target=queue_wrapper, args=(q, args))
+  p.start()
+  return_val = q.get()
+  p.join()
+  return return_val
 
+def get_model_shape(model, input_dim = (10,1,256,256)):
+  shp = input_dim
+  for layer in model.layers:
+    shp = layer.get_output_shape_for(shp)
+    print(" %s :: %s" % (str(shp).ljust(20, ' '), layer.name))

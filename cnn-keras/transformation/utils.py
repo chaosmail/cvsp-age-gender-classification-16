@@ -16,40 +16,40 @@ def get_normalization_transform(means=None, stds=None, resize_to=None, transpose
   if resize_to is not None:
     t = ResizeTransformation(resize_to)
     tform.add_transformation(t)
-    print("  %s" % t.__class__.__name__)
+    print("  %s" % type(t).__name__)
 
   t = FloatCastTransformation()
   tform.add_transformation(t)
-  print("  %s" % t.__class__.__name__)
+  print("  %s" % type(t).__name__)
 
   if means is not None:
     t = PerChannelSubtractionImageTransformation(np.array(means, dtype=np.float32))
     tform.add_transformation(t)
-    print("  %s (%s)" % (t.__class__.__name__, str(t.values())))
+    print("  %s (%s)" % (type(t).__name__, str(t.values())))
 
   if stds is not None:
     t = PerChannelDivisionImageTransformation(np.array(stds, dtype=np.float32))
     tform.add_transformation(t)
-    print("  %s (%s)" % (t.__class__.__name__, str(t.values())))
+    print("  %s (%s)" % (type(t).__name__, str(t.values())))
 
   if grayscale is True:
     t = GrayscaleTransformation()
     tform.add_transformation(t)
-    print("  %s" % (t.__class__.__name__))
+    print("  %s" % (type(t).__name__))
 
   if scale_to is not None:
     t = MultiplyTransformation(scale_to)
     tform.add_transformation(t)
-    print("  %s %s" % (t.__class__.__name__, str(t.value())))    
+    print("  %s %s" % (type(t).__name__, str(t.value())))    
 
   if transpose_to is not None:
     t = TransposeTransformation(transpose_to)
     tform.add_transformation(t)
-    print("  %s %s" % (t.__class__.__name__, str(t.value())))
+    print("  %s %s" % (type(t).__name__, str(t.value())))
 
   if reshape_to is not None:
     t = ReshapeTransformation(reshape_to)
     tform.add_transformation(t)
-    print("  %s %s" % (t.__class__.__name__, str(t.value())))
+    print("  %s %s" % (type(t).__name__, str(t.value())))
 
   return tform

@@ -14,44 +14,43 @@ def get_simple_cnn(input_shape=(3,224,224), n_classes=10, l2_reg=0.0, fc6=1000, 
   use_bias = False if batch_norm else True
 
   model = Sequential()
+  border_mode = 'valid'
+  bn_axis = 1
+  bn_mode = 0
 
   # Input Layer
   model.add(InputLayer(input_shape=input_shape))
 
   # Feature Layers
-  model.add(Convolution2D(96, 3, 3, border_mode='full', init=init,
-    W_regularizer=l2(l2_reg), activation=activation, bias=use_bias))
-  # model.add(Activation(activation))
+  model.add(Convolution2D(96, 3, 3, border_mode=border_mode, init=init,
+    W_regularizer=l2(l2_reg), bias=use_bias))
   if batch_norm:
-    model.add(BatchNormalization(mode=0, axis=1))
+    model.add(BatchNormalization(mode=bn_mode, axis=bn_axis))
+  model.add(Activation(activation))
   model.add(MaxPooling2D((2,2), strides=(2,2)))
   
-  model.add(Convolution2D(256, 3, 3, border_mode='full', init=init,
-    W_regularizer=l2(l2_reg), activation=activation, bias=use_bias))
-  # model.add(Activation(activation))
+  model.add(Convolution2D(256, 3, 3, border_mode=border_mode, init=init,
+    W_regularizer=l2(l2_reg), bias=use_bias))
   if batch_norm:
-    model.add(BatchNormalization(mode=0, axis=1))
+    model.add(BatchNormalization(mode=bn_mode, axis=bn_axis))
+  model.add(Activation(activation))
   model.add(MaxPooling2D((2,2), strides=(2,2)))
 
-  model.add(Convolution2D(384, 3, 3, border_mode='full', init=init,
-    W_regularizer=l2(l2_reg), activation=activation, bias=use_bias))
-  # model.add(Activation(activation))
+  model.add(Convolution2D(384, 3, 3, border_mode=border_mode, init=init,
+    W_regularizer=l2(l2_reg), bias=use_bias))
   if batch_norm:
-    model.add(BatchNormalization(mode=0, axis=1))
+    model.add(BatchNormalization(mode=bn_mode, axis=bn_axis))
+  model.add(Activation(activation))
   model.add(MaxPooling2D((2,2), strides=(2,2)))
 
   model.add(Flatten())
 
   # Classification Layers
   if class_layers:
-    model.add(Dense(fc6, init=init,
-      W_regularizer=l2(l2_reg), activation=activation))
-    # model.add(Activation(activation))
+    model.add(Dense(fc6, init=init, W_regularizer=l2(l2_reg), activation=activation))
     model.add(Dropout(dropout))
 
-    model.add(Dense(fc7, init=init,
-      W_regularizer=l2(l2_reg), activation=activation))
-    # model.add(Activation(activation))
+    model.add(Dense(fc7, init=init, W_regularizer=l2(l2_reg), activation=activation))
     model.add(Dropout(dropout))
 
   # Loss Layer
