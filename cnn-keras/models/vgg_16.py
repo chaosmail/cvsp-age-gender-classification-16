@@ -8,7 +8,7 @@ def get_vgg16(input_shape=(3,224,224), n_classes=10, weights_path=None, dropout=
   
   model = Sequential()
   
-  model.add(Input(shape=input_shape))
+  model.add(InputLayer(input_shape=input_shape))
 
   # Feature Layers
   model.add(Convolution2D(64, 3, 3, border_mode='same', init=init, W_regularizer=l2(l2_reg)))

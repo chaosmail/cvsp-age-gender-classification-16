@@ -19,12 +19,12 @@ import models
 shp = (3,112,112)
 
 n_epochs = 30
-batchsize = 10
+batchsize = 64
 learning_rate = 1e-2
 decay_rate = 0.0
 l2_reg = 1e-3
 early_stopping_rounds = 10
-use_class_weights = True
+use_class_weights = False
 
 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
@@ -75,7 +75,7 @@ print("Initializing model %s ..." % MODEL_NAME)
 model = models.get_vgg16(
   input_shape=shp, n_classes=len(class_names),
   init='glorot_normal', # Seems to be more stable than glorot uniform (Xavier Initialization)
-  batch_norm=False,      # Better generalization and faster convergence, no improvements with ELU (slower computation)
+  #batch_norm=False,      # Better generalization and faster convergence, no improvements with ELU (slower computation)
   l2_reg=l2_reg,        # Adds good generalization to the model
   activation='elu',     # Seems to converge much faster instead of ReLU
   dropout=0.5,          # More generalization, drop rand connections at training time,

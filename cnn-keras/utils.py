@@ -6,6 +6,7 @@ from multiprocessing import Process, Queue
 import itertools
 import numpy as np
 import timeit
+import pyprind
 
 try:
   import cPickle as pickle
@@ -48,6 +49,9 @@ def train(model, mb_train, mb_val, n_epochs, best_model_path, logs_path, early_s
     # Shuffle the training batches
     mb_train.shuffle()
 
+    bar = pyprind.ProgBar(mb_train.nbatches() + mb_val.nbatches(),
+      title=' [Epoch %03d]' % epoch, bar_char='*')
+
     for i in range(mb_train.nbatches()):
       X_batch, y, ids = mb_train.batch(i)
       Y_batch = np_utils.to_categorical(y, mb_train.dataset.nclasses())
@@ -55,6 +59,8 @@ def train(model, mb_train, mb_val, n_epochs, best_model_path, logs_path, early_s
       loss_and_metrics = model.test_on_batch(X_batch, Y_batch)
       train_loss[i] = loss_and_metrics[0]
       train_acc[i] = loss_and_metrics[1]
+      bar.update(force_flush=True, msg=" %i/%i | train loss: %.3f, train acc: %.3f" % (
+        i, mb_train.nbatches(), loss_and_metrics[0], loss_and_metrics[1]))
 
     for i in range(mb_val.nbatches()):
       X_val, y, ids = mb_val.batch(i)
@@ -62,20 +68,22 @@ def train(model, mb_train, mb_val, n_epochs, best_model_path, logs_path, early_s
       loss_and_metrics = model.test_on_batch(X_val, Y_val)
       val_loss[i] = loss_and_metrics[0]
       val_acc[i] = loss_and_metrics[1]
+      bar.update(force_flush=True, msg=" %i/%i | val loss: %.3f, val acc: %.3f" % (
+        i, mb_val.nbatches(), loss_and_metrics[0], loss_and_metrics[1]))
 
     stop = timeit.default_timer()
 
     logs[epoch] = np.array([train_loss.mean(), train_acc.mean(), val_loss.mean(), val_acc.mean()])
     np.save(logs_path, logs)
 
-    print(" [Epoch %03d] duration: %.1fs, loss: %.3f, training accuracy: %.3f, validation accuracy: %.3f" % (
+    print(" [Epoch %03d] duration: %.1fs, loss: %.3f, training accuracy: %.3f, val accuracy: %.3f" % (
       epoch, stop - start, train_loss.mean(), train_acc.mean(), val_acc.mean()))
 
     if val_acc.mean() > best_val_acc:
       best_val_acc = val_acc.mean()
       epoch_of_best_val_acc = epoch
       epochs_since_best_val = 0
-      print("  New best validation accuracy, saving model to \"%s\"" % best_model_path)
+      print("  New best val accuracy, saving model to \"%s\"" % best_model_path)
       model.save(best_model_path)
 
     elif early_stopping_rounds > 0 and epochs_since_best_val >= early_stopping_rounds:

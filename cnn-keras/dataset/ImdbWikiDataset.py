@@ -11,40 +11,42 @@ class ImdbWikiDataset(ImageDataset):
     self.split = split
     self.labels = []
     self.label_names = []
-    self.train_blocks = 5
+    self.train_blocks = 4
     self.test_blocks = 2
     self.data = self.load_data()
  
   def load_data(self, i=0):
     if self.split == 'train':
-      data = None
+      data = []
       for i in range(self.train_blocks):
-        block = np.load(fs.join(self.fdir, self.split + '_data_%02d.npy' % i))
-        data = block if data is None else np.concatenate((data, block), axis=0)
-      return data
+        print(' [train] loading data block %i' % i)
+        data.append(np.load(fs.join(self.fdir, self.split + '_data_%02d.npy' % i)))
+      return np.concatenate(data, axis=0)
     elif self.split == 'test':
       data = None
       for i in range(self.test_blocks):
-        block = np.load(fs.join(self.fdir, self.split + '_data_%02d.npy' % i))
-        data = block if data is None else np.concatenate((data, block), axis=0)
-      return data
+        print(' [test] loading data block %i' % i)
+        data.append(np.load(fs.join(self.fdir, self.split + '_data_%02d.npy' % i)))
+      return np.concatenate(data, axis=0)
     else:
+      print(' [val] loading data')
       return np.load(fs.join(self.fdir, self.split + '_data.npy'))
 
   def load_labels(self, label_str, i=0):
     if self.split == 'train':
-      meta = None
+      meta = []
       for i in range(self.train_blocks):
-        block = np.load(fs.join(self.fdir, self.split + '_data_label_%s_%02d.npy' % (label_str, i)))
-        meta = block if meta is None else np.concatenate((meta, block), axis=0)
-      return meta
+        print(' [train] loading labels block %i' % i)
+        meta.append(np.load(fs.join(self.fdir, self.split + '_data_label_%s_%02d.npy' % (label_str, i))))
+      return np.concatenate(meta, axis=0)
     elif self.split == 'test':
       meta = None
-      for i in range(self.train_blocks):
-        block = np.load(fs.join(self.fdir, self.split + '_data_label_%s_%02d.npy' % (label_str, i)))
-        meta = block if meta is None else np.concatenate((meta, block), axis=0)
-      return meta
+      for i in range(self.test_blocks):
+        print(' [test] loading labels block %i' % i)
+        meta.append(np.load(fs.join(self.fdir, self.split + '_data_label_%s_%02d.npy' % (label_str, i))))
+      return np.concatenate(meta, axis=0)
     else:
+      print(' [val] loading labels')
       return np.load(fs.join(self.fdir, self.split + '_data_label_%s.npy' % (label_str)))
 
   @functools.lru_cache(maxsize=64)
