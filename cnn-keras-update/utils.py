@@ -120,12 +120,10 @@ def train_loop(model, mb_train, mb_val, opt, params={}):
     stop = timeit.default_timer()
 
     if multi_loss:
-      val_acc = val_acc.mean(axis=0)
-
-      train_loss_mean = train_loss.mean(axis=1)
-      train_accs_mean = train_acc.mean(axis=1)
-      val_loss_mean = val_loss.mean(axis=1)
-      val_acc_mean = val_acc.mean(axis=1)
+      train_loss_mean = train_loss.mean(axis=0)
+      train_accs_mean = train_acc.mean(axis=0)
+      val_loss_mean = val_loss.mean(axis=0)
+      val_acc_mean = val_acc.mean(axis=0)
 
       logs.append([
         train_loss_mean[0], train_loss_mean[1], train_loss_mean[2],
@@ -167,7 +165,7 @@ def train_loop(model, mb_train, mb_val, opt, params={}):
     # Save the logs to disk
     np.save('results/%s/logs' % timestamp, logs)
 
-    if vval_acc_track > best_val_acc:
+    if val_acc_track > best_val_acc:
       best_val_acc = val_acc_track
       epoch_of_best_val_acc = epoch
       epochs_since_best_val = 0
