@@ -58,6 +58,7 @@ class MiniBatchGenerator:
       else:
         X[i] = self.dataset.sample(_id)
       y[i] = self.dataset.sample_class(_id)
+      y[i] = y[i] if int(y[i]) in range(0, 10) else 1  # fix some errors in labels (gender labels)
       ids[i] = _id
 
     return X, y, ids
