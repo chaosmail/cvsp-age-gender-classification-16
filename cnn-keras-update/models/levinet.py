@@ -19,7 +19,7 @@ def get_levinet(params, weights_path=None):
     # *                                  Conv 1                                  *
     # ****************************************************************************
 
-    conv1 = Convolution2D(96,7,7,subsample=(2,2),border_mode='valid', activation=activation,
+    conv1 = Convolution2D(96,7,7,subsample=(4,4),border_mode='valid', activation=activation,
         name='conv1/7x7',W_regularizer=l2(l2_reg))(input)
 
     pool1 = MaxPooling2D(pool_size=(2,2),strides=(2,2),border_mode='valid',
@@ -32,7 +32,7 @@ def get_levinet(params, weights_path=None):
     # *                                  Conv 2                                  *
     # ****************************************************************************
 
-    conv2 = Convolution2D(256,5,5, border_mode='same', activation=activation,
+    conv2 = Convolution2D(256,5,5, border_mode='valid', activation=activation,
         name='conv2/5x5',W_regularizer=l2(l2_reg))(norm1)
     
     pool2 = MaxPooling2D(pool_size=(2,2), strides=(2,2), border_mode='valid',
@@ -68,7 +68,7 @@ def get_levinet(params, weights_path=None):
     
     drop_fc7 = Dropout(dropout, name='loss/drop/fc7')(fc7)
 
-    prob = Dense(n_classes, activation=activation,
+    prob = Dense(n_classes, activation='softmax',
         name='prob', W_regularizer=l2(l2_reg))(drop_fc7)
     
 
@@ -100,7 +100,7 @@ def get_levinet_multi(params, weights_path=None):
     # *                                  Conv 1                                  *
     # ****************************************************************************
 
-    conv1 = Convolution2D(96,7,7,subsample=(2,2),border_mode='valid', activation=activation,
+    conv1 = Convolution2D(96,7,7,subsample=(4,4),border_mode='valid', activation=activation,
         name='conv1/7x7',W_regularizer=l2(l2_reg))(input)
 
     pool1 = MaxPooling2D(pool_size=(2,2),strides=(2,2),border_mode='valid',
@@ -113,7 +113,7 @@ def get_levinet_multi(params, weights_path=None):
     # *                                  Conv 2                                  *
     # ****************************************************************************
 
-    conv2 = Convolution2D(256,5,5, border_mode='same', activation=activation,
+    conv2 = Convolution2D(256,5,5, border_mode='valid', activation=activation,
         name='conv2/5x5',W_regularizer=l2(l2_reg))(norm1)
     
     pool2 = MaxPooling2D(pool_size=(2,2), strides=(2,2), border_mode='valid',
@@ -149,7 +149,7 @@ def get_levinet_multi(params, weights_path=None):
     
     l1_drop_fc7 = Dropout(dropout, name='loss1/drop/fc7')(l1fc7)
 
-    prob1 = Dense(n_classes[0], activation=activation,
+    prob1 = Dense(n_classes[0], activation='softmax',
         name='prob1', W_regularizer=l2(l2_reg))(l1_drop_fc7)
     
 
@@ -167,7 +167,7 @@ def get_levinet_multi(params, weights_path=None):
     
     l2_drop_fc7 = Dropout(dropout, name='loss2/drop/fc7')(l2fc7)
 
-    prob2 = Dense(n_classes[1], activation=activation,
+    prob2 = Dense(n_classes[1], activation='softmax',
         name='prob2', W_regularizer=l2(l2_reg))(l2_drop_fc7)
 
 

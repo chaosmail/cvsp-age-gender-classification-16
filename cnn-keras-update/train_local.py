@@ -14,6 +14,8 @@ from models.googlenet_custom_layers import PoolHelper, LRN
 from utils import *
 from models import *
 
+DATASET_DIR = '../data/imdb-wiki-dataset'
+
 
 def main(params):
 
@@ -23,8 +25,6 @@ def main(params):
   add_to_report('# Training Report', params)
   add_to_report('\n## Parameters', params)
   add_to_report(params, params)
-
-  DATASET_DIR = '../data/imdb-wiki-dataset'
 
   print("Loading Dataset ...")
   # Initialize the datasets
