@@ -11,7 +11,7 @@ class ImdbWikiDataset(ImageDataset):
     self.split = split
     self.labels = []
     self.label_names = []
-    self.train_blocks = 4
+    self.train_blocks = 3
     self.test_blocks = 2
     self.data = self.load_data()
  
@@ -23,7 +23,7 @@ class ImdbWikiDataset(ImageDataset):
         data.append(np.load(fs.join(self.fdir, self.split + '_data_%02d.npy' % i)))
       return np.concatenate(data, axis=0)
     elif self.split == 'test':
-      data = None
+      data = []
       for i in range(self.test_blocks):
         print(' [test] loading data block %i' % i)
         data.append(np.load(fs.join(self.fdir, self.split + '_data_%02d.npy' % i)))
@@ -40,7 +40,7 @@ class ImdbWikiDataset(ImageDataset):
         meta.append(np.load(fs.join(self.fdir, self.split + '_data_label_%s_%02d.npy' % (label_str, i))))
       return np.concatenate(meta, axis=0)
     elif self.split == 'test':
-      meta = None
+      meta = []
       for i in range(self.test_blocks):
         print(' [test] loading labels block %i' % i)
         meta.append(np.load(fs.join(self.fdir, self.split + '_data_label_%s_%02d.npy' % (label_str, i))))

@@ -93,7 +93,7 @@ def classify_image(model, sample):
   return probas
 
 
-def perform_classification(model_path, image_path, means=None, stds=None):
+def perform_classification(model_path, image_path, means=[0.45008409, 0.37675238, 0.3356632], stds=[0.28836954, 0.26367465, 0.2598381]):
   image = load_image(image_path)
   model = load_classifier(model_path)
   sample = preprocess_image(image, means=means, stds=stds, dims=(32,32,3), out_shape=(3,32,32))

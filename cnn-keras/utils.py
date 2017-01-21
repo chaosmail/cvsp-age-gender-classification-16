@@ -4,7 +4,7 @@ Authors: Christoph Koerner & Patrick Wahrmann
 from multiprocessing import Process, Queue
 import itertools
 import numpy as np
-import matplotlib.pyplot as plt  # sudo apt-get install python3-tk
+#import matplotlib.pyplot as plt  # sudo apt-get install python3-tk
 import timeit
 import pyprind
 
