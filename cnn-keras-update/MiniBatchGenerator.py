@@ -50,7 +50,10 @@ class MiniBatchGenerator:
     tf = self.tform.apply
     ix = self.indices[st:st+bs]
 
-    X = np.apply_along_axis(tf, 0, self.dataset.samples()[ix,:]).astype(np.float16)
+    X = self.dataset.samples()[ix,:]
+    
+    if self.tform:
+      X = self.tform.apply(X)
     
     if hot_one:
       y = np_utils.to_categorical(self.dataset.classes()[ix], self.dataset.nclasses())
@@ -76,7 +79,10 @@ class MiniBatchMultiLossGenerator(MiniBatchGenerator):
     tf = self.tform.apply
     ix = self.indices[st:st+bs]
 
-    X = np.apply_along_axis(tf, 0, self.dataset.samples()[ix,:]).astype(np.float16)
+    X = self.dataset.samples()[ix,:]
+    
+    if self.tform:
+      X = self.tform.apply(X)
 
     if hot_one:
       y = [np_utils.to_categorical(yb[ix].astype(int), self.dataset.nclasses_per(i))

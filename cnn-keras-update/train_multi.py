@@ -16,6 +16,23 @@ from models import *
 
 DATASET_DIR = '/data/imdb-wiki-dataset'
 
+# Configurations
+PARAMS = {
+  'name': 'CNN Age Gender',
+  'input_shape': (3,112,112),
+  'n_classes': [10, 2],
+  'n_epochs': 100,
+  'batchsize': 64,
+  'dropout': 0.5,
+  'learning_rate': 1e-2,
+  'learning_rate_decay': 1e-3,
+  'early_stopping_rounds': 10,
+  'l2_reg': 2e-4,
+  'activation': 'elu',
+  'init': 'glorot_normal',
+  'augmentation': True,
+  'multi_loss': True
+}
 
 def main(params):
 
@@ -53,7 +70,7 @@ def main(params):
   # SGD with Nesterov Momentum
   learning_rate = params.get('learning_rate', 1e-2)
   momentum = params.get('momentum', 0.9)
-  opt = SGD(lr=learning_rate, momentum=momentum, nesterov=True)
+  opt = SGD(lr=learning_rate)
 
   model.compile(loss={
     'prob1': 'categorical_crossentropy',
@@ -84,22 +101,4 @@ def main(params):
 
 
 if __name__ == '__main__':
-
-  # Configurations
-  params = {
-    'name': 'CNN Age',
-    'input_shape': (3,112,112),
-    'n_classes': [10, 2],
-    'n_epochs': 30,
-    'batchsize': 64,
-    'dropout': 0.4,
-    'momentum': 0.9,
-    'learning_rate': 1e-1,
-    'learning_rate_decay': 1e-2,
-    'early_stopping_rounds': 10,
-    'l2_reg': 2e-4,
-    'use_class_weights': False,
-    'multi_loss': True
-  }
-
-  main(params)
+  main(PARAMS)

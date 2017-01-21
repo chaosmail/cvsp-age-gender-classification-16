@@ -10,5 +10,5 @@ from .ResizeTransformation import *
 from .GrayscaleTransformation import *
 from .PerChannelSubtractionImageTransformation import *
 from .PerChannelDivisionImageTransformation import *
-
+from .AugmentationTransformation import *
 from .utils import *

@@ -16,6 +16,22 @@ from models import *
 
 DATASET_DIR = '/data/imdb-wiki-dataset'
 
+# Configurations
+PARAMS = {
+  'name': 'CNN Age Levinet orig. params',
+  'input_shape': (3,112,112),
+  'n_classes': 10,
+  'n_epochs': 100,
+  'batchsize': 50,
+  'learning_rate': 1e-3,
+  'learning_rate_decay': 1e-3,
+  'early_stopping_rounds': 10,
+  'use_class_weights': True,
+
+  # use default settings instead
+  # 'dropout': 0.4,
+  # 'l2_reg': 2e-4,
+}
 
 def main(params):
 
@@ -38,11 +54,11 @@ def main(params):
 
   if params.get('use_class_weights', False):
     print("Using class weights")
-    class_weight = utils.get_class_weight(class_names, ds_train.classes())
-    for c, w in class_weight.items():
+    add_to_report("\nClass weights", params)
+    params['class_weight'] = get_class_weight(class_names, ds_train.classes())
+    for c, w in params['class_weight'].items():
       print(" [%s] %f" % (class_names[c], w))
-  else:
-    class_weight = None
+      add_to_report(" - %s %f" % (class_names[c], w), params)
 
   # Initialize a softmax classifier
   print("Initializing CNN and optimizer ...")
@@ -52,8 +68,7 @@ def main(params):
 
   # SGD with Nesterov Momentum
   learning_rate = params.get('learning_rate', 1e-2)
-  momentum = params.get('momentum', 0.9)
-  opt = SGD(lr=learning_rate, momentum=momentum, nesterov=True)
+  opt = SGD(lr=learning_rate)
 
   model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
@@ -81,21 +96,4 @@ def main(params):
 
 
 if __name__ == '__main__':
-
-  # Configurations
-  params = {
-    'name': 'CNN Age',
-    'input_shape': (3,112,112),
-    'n_classes': 10,
-    'n_epochs': 100,
-    'batchsize': 64,
-    'dropout': 0.4,
-    'momentum': 0.9,
-    'learning_rate': 1e-2,
-    'learning_rate_decay': 1e-3,
-    'early_stopping_rounds': 20,
-    'l2_reg': 2e-4,
-    'use_class_weights': False
-  }
-
-  main(params)
+  main(PARAMS)

@@ -11,6 +11,7 @@ from transformation import get_normalization_transform
 from MiniBatchGenerator import MiniBatchGenerator, MiniBatchMultiLossGenerator
 import keras.backend as K
 from keras.utils import np_utils
+from keras.utils import layer_utils
 
 try:
   import cPickle as pickle
@@ -72,7 +73,7 @@ def train_loop(model, mb_train, mb_val, opt, params={}):
 
     for i in range(mb_train.nbatches()):
       X_batch, Y_batch, ids = mb_train.batch(i)
-      model.train_on_batch(X_batch, Y_batch)
+      model.train_on_batch(X_batch, Y_batch, class_weight=params.get('class_weight', None))
       loss_and_metrics = model.test_on_batch(X_batch, Y_batch)
       if multi_loss:
         train_loss[i,0] = loss_and_metrics[0]
@@ -105,7 +106,7 @@ def train_loop(model, mb_train, mb_val, opt, params={}):
         val_acc[i,1] = loss_and_metrics[4]
 
         bar.update(force_flush=True,
-          msg=" %i/%i | val loss: %.3f, acc: %.3f/%.3f" % (i, mb_train.nbatches(),
+          msg=" %i/%i | val loss: %.3f, acc: %.3f/%.3f" % (i, mb_val.nbatches(),
             loss_and_metrics[0], loss_and_metrics[3], loss_and_metrics[4]
         ))
       else:
@@ -113,7 +114,7 @@ def train_loop(model, mb_train, mb_val, opt, params={}):
         val_acc[i] = loss_and_metrics[1]
 
         bar.update(force_flush=True,
-          msg=" %i/%i | val loss: %.3f, acc: %.3f" % (i, mb_train.nbatches(),
+          msg=" %i/%i | val loss: %.3f, acc: %.3f" % (i, mb_val.nbatches(),
             loss_and_metrics[0], loss_and_metrics[1]
         ))
 
@@ -195,18 +196,32 @@ def test_loop(model, mb_test, params={}):
   test_loss = np.zeros((mb_test.nbatches(), loss_dim))
   test_acc = np.zeros((mb_test.nbatches(), accs_dim))
 
+  bar = pyprind.ProgBar(mb_test.nbatches(), bar_char='*')
+
   for i in range(mb_test.nbatches()):
     X_test, Y_test, ids = mb_test.batch(i)
     loss_and_metrics = model.test_on_batch(X_test, Y_test)
+
     if multi_loss:
       test_loss[i,0] = loss_and_metrics[0]
       test_loss[i,1] = loss_and_metrics[1]
       test_loss[i,2] = loss_and_metrics[2]
       test_acc[i,0] = loss_and_metrics[3]
       test_acc[i,1] = loss_and_metrics[4]
+
+      bar.update(force_flush=True,
+        msg=" %i/%i | test loss: %.3f, acc: %.3f/%.3f" % (i, mb_test.nbatches(),
+          loss_and_metrics[0], loss_and_metrics[3], loss_and_metrics[4]
+      ))
+
     else:
       test_loss[i] = loss_and_metrics[0]
       test_acc[i] = loss_and_metrics[1]
+
+      bar.update(force_flush=True,
+        msg=" %i/%i | test loss: %.3f, acc: %.3f" % (i, mb_test.nbatches(),
+          loss_and_metrics[0], loss_and_metrics[1]
+      ))
 
   add_to_report("\n## Testing", params)
   
@@ -329,28 +344,107 @@ def get_class_weight(labels, y):
 
   return class_weights
 
-def get_model_shape(model, input_dim = (10,1,256,256)):
-  m_def = ""
-  shp = input_dim
-  for layer in model.layers:
+def get_model_summary(model, line_length=100, positions=[.33, .55, .67, 1.]):
+  out = ""
+  if hasattr(model, 'flattened_layers'):
+    # Support for legacy Sequential/Merge behavior.
+    layers = model.flattened_layers
+  else:
+    layers = model.layers
+  if positions[-1] <= 1:
+    positions = [int(line_length * p) for p in positions]
+
+  relevant_nodes = getattr(model, 'container_nodes', None)
+  to_display = ['Layer (type)', 'Output Shape', 'Param #', 'Connected to']
+
+  def get_row(fields, positions):
+    line = ''
+    for i in range(len(fields)):
+        if i > 0:
+            line = line[:-1] + ' '
+        line += str(fields[i])
+        line = line[:positions[i]]
+        line += ' ' * (positions[i] - len(line))
+    return str(line) + "\n"
+
+  out += '_' * line_length
+  out += '\n'
+  out += get_row(to_display, positions)
+  out += '=' * line_length
+  out += '\n'
+
+  def get_layer_summary(layer):
+    """Prints a summary for a single layer.
+    # Arguments
+        layer: target layer.
+    """
+    out = ""
     try:
-      shp = layer.get_output_shape_for(shp)
-      m_def += " %s :: %s\n" % (str(shp).ljust(20, ' '), layer.name)
-    except:
-      pass
-  return m_def
+      output_shape = layer.output_shape
+    except AttributeError:
+      output_shape = 'multiple'
+    connections = []
+    for node_index, node in enumerate(layer.inbound_nodes):
+      if relevant_nodes:
+        node_key = layer.name + '_ib-' + str(node_index)
+        if node_key not in relevant_nodes:
+          # node is node part of the current network
+          continue
+      for i in range(len(node.inbound_layers)):
+        inbound_layer = node.inbound_layers[i].name
+        inbound_node_index = node.node_indices[i]
+        inbound_tensor_index = node.tensor_indices[i]
+        connections.append(inbound_layer + '[' + str(inbound_node_index) + '][' + str(inbound_tensor_index) + ']')
+
+    name = layer.name
+    cls_name = layer.__class__.__name__
+    if not connections:
+      first_connection = ''
+    else:
+      first_connection = connections[0]
+    fields = [name + ' (' + cls_name + ')', output_shape, layer.count_params(), first_connection]
+    out += get_row(fields, positions)
+    if len(connections) > 1:
+      for i in range(1, len(connections)):
+        fields = ['', '', '', connections[i]]
+        out += get_row(fields, positions)
+    return out
+
+  for i in range(len(layers)):
+    out += get_layer_summary(layers[i])
+    if i == len(layers) - 1:
+      out += '=' * line_length
+      out += '\n'
+    else:
+      out += '_' * line_length
+      out += '\n'
+
+  trainable_count, non_trainable_count = layer_utils.count_total_params(layers, layer_set=None)
+
+  out += 'Total params: {:,}'.format(trainable_count + non_trainable_count)
+  out += '\n'
+  out += 'Trainable params: {:,}'.format(trainable_count)
+  out += '\n'
+  out += 'Non-trainable params: {:,}'.format(non_trainable_count)
+  out += '\n'
+  out += '_' * line_length
+  out += '\n'
+
+  return out
 
 def get_train_mb(ds_train, ds_val, params={}):
   timestamp = params.get('timestamp')
   batchsize = params.get('batchsize', 64)
   multi_loss = params.get('multi_loss', False)
+  augmentation = params.get('augmentation', False)
   add_to_report('\n## Transformations', params)
 
   # Initialize the preprocessing pipeline
   print("Setting up preprocessing ...")
   tform = get_normalization_transform(
     means=ds_train.get_mean(per_channel=True),
-    stds=ds_train.get_stddev(per_channel=True)
+    stds=ds_train.get_stddev(per_channel=True),
+    augmentation=augmentation
   )
 
   add_to_report(" - %s [%s] (values: %s)" % (
@@ -404,7 +498,8 @@ def add_model_to_report(model, params):
 
   # Print the model Shape
   add_to_report('\n## Model architecture')
-  m_def = get_model_shape(model, (batchsize, shp[0], shp[1], shp[2]))
+  model.summary()
+  m_def = get_model_summary(model)
   print('\nUsing architecture:')
   print(m_def)
 
