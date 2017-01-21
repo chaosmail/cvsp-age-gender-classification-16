@@ -4,7 +4,7 @@ Authors: Christoph Koerner & Patrick Wahrmann
 from multiprocessing import Process, Queue
 import itertools
 import numpy as np
-import matplotlib.pyplot as plt  # sudo apt-get install python3-tk
+#import matplotlib.pyplot as plt  # sudo apt-get install python3-tk
 import timeit
 import pyprind
 
@@ -188,9 +188,9 @@ def load_meta_data(data_src, wiki_src, imdb_src):
 
 # [sudo] pip3 install git+git://github.com/jakebian/quiver.git
 def visualise_with_quiver(model, input_images='../data/', class_type='age', port=5000):
-  classes = ['1-15', '16-20', '21-25', '26-30', '31-35', '36-40', '40-45', '46-50', '51-55', '56-100']
+  classes = np.array(['1-15', '16-20', '21-25', '26-30', '31-35', '36-40', '40-45', '46-50', '51-55', '56-100'])
   if class_type != 'age':
-    classes = ['female', 'male']
+    classes = np.array(['female', 'male'])
 
   print("Starting Quiver on port %i" % port)
 
