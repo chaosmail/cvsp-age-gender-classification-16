@@ -37,8 +37,8 @@ print(" [%s] %i samples, %i minibatches of size %i" % (
   ds_test.split, mb_test.dataset.size(), mb_test.nbatches(), mb_test.batchsize()))
 
 # Load latest model
-#latest_model = max( fs.find('*.h5', path=MODEL_DIR), key=fs.ctime)
-latest_model = max( fs.find('*14:59:41.h5', path=MODEL_DIR), key=fs.ctime)
+latest_model = max( fs.find('*.h5', path=MODEL_DIR), key=fs.ctime)
+#latest_model = max( fs.find('*14:59:41.h5', path=MODEL_DIR), key=fs.ctime)
 
 # Test best model
 print("Testing model %s on test set ..." % latest_model)
