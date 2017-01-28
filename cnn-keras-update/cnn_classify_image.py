@@ -118,7 +118,7 @@ def classify_image(image, model=None, means=[0.45008409, 0.37675238, 0.3356632],
 
   sample = preprocess_image(image, means=means, stds=stds, dims=(112, 112, 3), out_shape=(3, 112, 112))
 
-  # Expand the sample (3,32,32) to batch dimension (1,3,32,32)
+  # Expand the sample (3,112,112) to batch dimension (1,3,112,112)
   X = np.expand_dims(sample, axis=0)
 
   #probas = model.predict_proba(X, batch_size=1, verbose=0).reshape(-1)
