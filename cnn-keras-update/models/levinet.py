@@ -6,16 +6,12 @@ from keras import initializations
 
 def get_levinet(params, weights_path=None):
     
-    input_shape = params.get('input_shape', (3,227,227))
+    input_shape = params.get('input_shape', (3,224,224))
     activation = params.get('activation', 'relu')
-    l2_reg = params.get('l2_reg', 0.0)
-    dropout = params.get('dropout', 0.5)
+    l2_reg = params.get('l2_reg', 2e-4)
+    dropout = params.get('dropout', 0.4)
     n_classes = params.get('n_classes', 10)
-
-    def orig_init(shape, **kwargs):
-        return initializations.normal(shape, scale=0.01, **kwargs)
-
-    init = params.get('init', orig_init)
+    init = params.get('init', 'glorot_uniform')
 
     input = Input(shape=input_shape)
     
@@ -24,8 +20,8 @@ def get_levinet(params, weights_path=None):
     # *                                  Conv 1                                  *
     # ****************************************************************************
 
-    conv1 = Convolution2D(96,7,7,subsample=(2,2),border_mode='valid', activation=activation,
-        name='conv1_7x7', init=init, W_regularizer=l2(l2_reg))(input)
+    conv1 = Convolution2D(96,7,7,subsample=(4,4),border_mode='valid', activation=activation,
+        name='conv1_7x7',W_regularizer=l2(l2_reg))(input)
 
     pool1 = MaxPooling2D(pool_size=(3,3),strides=(2,2),border_mode='valid',
         name='pool1_3x3')(conv1)
@@ -37,8 +33,8 @@ def get_levinet(params, weights_path=None):
     # *                                  Conv 2                                  *
     # ****************************************************************************
 
-    conv2 = Convolution2D(256,5,5,border_mode='same', activation=activation,
-        name='conv2_5x5', init=init, W_regularizer=l2(l2_reg))(norm1)
+    conv2 = Convolution2D(256,5,5, border_mode='valid', activation=activation,
+        name='conv2_5x5',W_regularizer=l2(l2_reg))(norm1)
     
     pool2 = MaxPooling2D(pool_size=(2,2), strides=(2,2), border_mode='valid',
         name='pool2_2x2')(conv2)
@@ -51,8 +47,8 @@ def get_levinet(params, weights_path=None):
     # ****************************************************************************
     
     conv3 = Convolution2D(384,3,3, border_mode='same', activation=activation,
-        name='conv3_3x3', init=init, W_regularizer=l2(l2_reg))(norm2)
-    
+        name='conv3_3x3',W_regularizer=l2(l2_reg))(norm2)
+     
     pool3 = MaxPooling2D(pool_size=(2,2), strides=(2,2), border_mode='valid',
         name='pool3_2x2')(conv3)
 

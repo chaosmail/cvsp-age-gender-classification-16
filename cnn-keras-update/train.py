@@ -18,19 +18,20 @@ DATASET_DIR = '/data/imdb-wiki-dataset'
 
 # Configurations
 PARAMS = {
-  'name': 'CNN Age Levinet orig. params',
+  'name': 'CNN Age Levinet Weights',
   'input_shape': (3,112,112),
   'n_classes': 10,
   'n_epochs': 100,
-  'batchsize': 50,
-  'learning_rate': 1e-3,
+  'batchsize': 64,
+  'learning_rate': 1e-2,
   'learning_rate_decay': 1e-3,
   'early_stopping_rounds': 10,
+  'activation': 'elu',
+  'init': 'glorot_normal',
+  'augmentation': True,
   'use_class_weights': True,
-
-  # use default settings instead
-  # 'dropout': 0.4,
-  # 'l2_reg': 2e-4,
+  'dropout': 0.5,
+  'l2_reg': 2e-4,
 }
 
 def main(params):
