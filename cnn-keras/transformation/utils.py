@@ -7,9 +7,11 @@ from .PerChannelSubtractionImageTransformation import *
 from .PerChannelDivisionImageTransformation import *
 from .ReshapeTransformation import *
 from .GrayscaleTransformation import *
+from .AugmentationTransformation import *
 
 
-def get_normalization_transform(means=None, stds=None, resize_to=None, transpose_to=None, reshape_to=None, grayscale=False, scale_to=None):
+def get_normalization_transform(means=None, stds=None, resize_to=None, transpose_to=None,
+    reshape_to=None, grayscale=False, scale_to=None, augmentation=False):
   print(" Initializing Transformations")
   tform = TransformationSequence()
 
@@ -51,5 +53,10 @@ def get_normalization_transform(means=None, stds=None, resize_to=None, transpose
     t = ReshapeTransformation(reshape_to)
     tform.add_transformation(t)
     print("  %s %s" % (type(t).__name__, str(t.value())))
+
+  if augmentation:
+    t = AugmentationTransformation()
+    tform.add_transformation(t)
+    print("  %s" % (type(t).__name__))
 
   return tform

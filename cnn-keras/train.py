@@ -5,120 +5,96 @@ import fs
 import datetime
 
 from dataset import ImdbWikiAgeDataset as Dataset
-from transformation import get_normalization_transform
 from MiniBatchGenerator import MiniBatchGenerator
 
 from keras.models import load_model
 from keras.optimizers import SGD, Adam, RMSprop
+from models.googlenet_custom_layers import PoolHelper, LRN
 
-import utils
-import models
-
-
-# Configurations
-shp = (3,112,112)
-
-n_epochs = 30
-batchsize = 64
-learning_rate = 1e-2
-decay_rate = 0.0
-l2_reg = 1e-3
-early_stopping_rounds = 10
-use_class_weights = False
-
-timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-
-MODEL_NAME = 'VGG_16_AGE_%i_%i_%i' % shp
+from utils import *
+from models import *
 
 DATASET_DIR = '/data/imdb-wiki-dataset'
-MODEL_DIR = '/data/models'
-LOGS_DIR = '/data/logs'
 
-MODEL_PATH = fs.join(MODEL_DIR, '%s_%s.h5' % (MODEL_NAME, timestamp))
-LOGS_PATH = fs.join(LOGS_DIR, '%s_%s.txt' % (MODEL_NAME, timestamp))
+# Configurations
+PARAMS = {
+  'name': 'CNN Age Levinet Weights',
+  'input_shape': (3,112,112),
+  'n_classes': 10,
+  'n_epochs': 100,
+  'batchsize': 64,
+  'learning_rate': 1e-2,
+  'learning_rate_decay': 1e-3,
+  'early_stopping_rounds': 10,
+  'activation': 'elu',
+  'init': 'glorot_normal',
+  'augmentation': True,
+  'use_class_weights': True,
+  'dropout': 0.5,
+  'l2_reg': 2e-4,
+}
 
-print("Loading Dataset ...")
-# Initialize the datasets
-ds_train = Dataset(DATASET_DIR, 'train')
-ds_val = Dataset(DATASET_DIR, 'val')
+def main(params):
 
-# Get the class names for this dataset
-class_names = ds_train.label_names
+  timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+  params['timestamp'] = timestamp
 
-# Initialize the preprocessing pipeline
-print("Setting up preprocessing ...")
-tform = get_normalization_transform(
-  means=ds_train.get_mean(per_channel=True),
-  stds=ds_train.get_stddev(per_channel=True)
-)
+  add_to_report('# Training Report', params)
+  add_to_report('\n## Parameters', params)
+  add_to_report(params, params)
 
-# Initialize the MiniBatch generators
-print("Initializing minibatch generators ...")
-mb_train = MiniBatchGenerator(ds_train, batchsize, tform)
-mb_val = MiniBatchGenerator(ds_val, batchsize, tform)
+  print("Loading Dataset ...")
+  # Initialize the datasets
+  ds_train = Dataset(DATASET_DIR, 'train')
+  ds_val = Dataset(DATASET_DIR, 'val')
 
-print(" [%s] %i samples, %i minibatches of size %i" % (
-  'train', mb_train.dataset.size(), mb_train.nbatches(), mb_train.batchsize()))
-print(" [%s] %i samples, %i minibatches of size %i" % (
-  'val', mb_val.dataset.size(), mb_val.nbatches(), mb_val.batchsize()))
+  # Get the class names for this dataset
+  class_names = ds_train.label_names
 
-if use_class_weights:
-  print("Using class weights")
-  class_weight = utils.get_class_weight(class_names, ds_train.classes())
-  for c, w in class_weight.items():
-    print(" [%s] %f" % (class_names[c], w))
-else:
-  class_weight = None
+  mb_train, mb_val, tform = get_train_mb(ds_train, ds_val, params=params)
 
-# Load the model
-print("Initializing model %s ..." % MODEL_NAME)
-model = models.get_vgg16(
-  input_shape=shp, n_classes=len(class_names),
-  init='glorot_normal', # Seems to be more stable than glorot uniform (Xavier Initialization)
-  #batch_norm=False,      # Better generalization and faster convergence, no improvements with ELU (slower computation)
-  l2_reg=l2_reg,        # Adds good generalization to the model
-  activation='elu',     # Seems to converge much faster instead of ReLU
-  dropout=0.5,          # More generalization, drop rand connections at training time,
-  fc6=4096,
-  fc7=4096
-)
+  if params.get('use_class_weights', False):
+    print("Using class weights")
+    add_to_report("\nClass weights", params)
+    params['class_weight'] = get_class_weight(class_names, ds_train.classes())
+    for c, w in params['class_weight'].items():
+      print(" [%s] %f" % (class_names[c], w))
+      add_to_report(" - %s %f" % (class_names[c], w), params)
 
-# Print the model Shape
-print('Using architecture:')
-utils.get_model_shape(model, (batchsize, shp[0], shp[1], shp[2]))
+  # Initialize a softmax classifier
+  print("Initializing CNN and optimizer ...")
+  model = get_levinet(params)
 
-# Initialize optimizer
-opt = SGD(lr=learning_rate, decay=decay_rate)
-print("Initializing %s optimizer ..." % type(opt).__name__)
-print(" [learning_rate]: %f" % learning_rate)
-print(" [decay_rate]: %f" % decay_rate)
+  add_model_to_report(model, params)
 
-model.compile(
-  # Multi class classification loss
-  loss='categorical_crossentropy',
+  # SGD with Nesterov Momentum
+  learning_rate = params.get('learning_rate', 1e-2)
+  opt = SGD(lr=learning_rate)
 
-  # ADAM optimization
-  optimizer=opt,
+  model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+
+  try:
+    print("Training for %i epochs ..." % params.get('n_epochs'))
+    train_loop(model, mb_train, mb_val, opt=opt, params=params)
+
+  except KeyboardInterrupt:
+    print("\n\n*** Stopping Training\n\n")
   
-  # Add a metric to be evaluated after every batch
-  metrics=['accuracy']
-)
+  print("Testing best model on test set ...")
 
-# Use only in testing
-# utils.visualise_with_quiver(model, DATASET_DIR, class_type='age')
+  # Initialize test data
+  batchsize = params.get('batchsize', 64)
 
-# Train model
-print("Training for %i epochs ..." % n_epochs)
-utils.train(model, mb_train, mb_val, n_epochs,
-            best_model_path=MODEL_PATH, logs_path=LOGS_PATH, early_stopping_rounds=early_stopping_rounds)
+  ds_test = Dataset(DATASET_DIR, 'test')
+  mb_test = MiniBatchGenerator(ds_test, batchsize, tform)
+  print(" [%s] %i samples, %i minibatches of size %i" % (
+    ds_test.split, mb_test.dataset.size(), mb_test.nbatches(), mb_test.batchsize()))
 
-# Initialize test data
-ds_test = Dataset(DATASET_DIR, 'test')
-mb_test = MiniBatchGenerator(ds_test, batchsize, tform)
+  # Load the global best model
+  model = load_model('results/%s/best_model.h5' % timestamp,  custom_objects={"LRN": LRN})
 
-print(" [%s] %i samples, %i minibatches of size %i" % (
-  ds_test.split, mb_test.dataset.size(), mb_test.nbatches(), mb_test.batchsize()))
+  test_loop(model, mb_test, params=params)
 
-# Test best model
-print("Testing best model on test set ...")
-utils.test(load_model(MODEL_PATH), mb_test)
+
+if __name__ == '__main__':
+  main(PARAMS)

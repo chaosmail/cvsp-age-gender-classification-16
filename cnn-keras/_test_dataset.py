@@ -63,23 +63,18 @@ def print_summary(dataset_name, sets, sid=110):
 # print('\n')
 
 # the dataset is in the directory
-DATASET_DIR = '../data/imdb-wiki-tiny-dataset'
+DATASET_DIR = '/data/imdb-wiki-dataset'
 
-from dataset import TinyImdbWikiAgeDataset as Dataset
+from dataset import ImdbWikiAgeDataset as Dataset
 
-# Print a summary of the dataset
-print_summary('TinyImdbWikiAgeDataset', [
-  Dataset(DATASET_DIR, 'train'),
-  Dataset(DATASET_DIR, 'val'),
-  Dataset(DATASET_DIR, 'test')
+print_summary('ImdbWikiAgeDataset', [
+  Dataset(DATASET_DIR, 'train')
 ])
 
+print_summary('ImdbWikiAgeDataset', [
+  Dataset(DATASET_DIR, 'val')
+])
 
-from dataset import TinyImdbWikiGenderDataset as Dataset
-
-# Print a summary of the dataset
-print_summary('TinyImdbWikiGenderDataset', [
-  Dataset(DATASET_DIR, 'train'),
-  Dataset(DATASET_DIR, 'val'),
+print_summary('ImdbWikiAgeDataset', [
   Dataset(DATASET_DIR, 'test')
 ])

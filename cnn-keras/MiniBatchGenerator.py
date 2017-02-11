@@ -3,6 +3,7 @@ Author: Christoph Koerner
 Student-ID: 0726266
 """
 import numpy as np
+from keras.utils import np_utils
 
 
 class MiniBatchGenerator:
@@ -34,31 +35,59 @@ class MiniBatchGenerator:
     # ends up at a random location in a random minibatch.
     np.random.shuffle(self.indices)
 
-  def batch(self, bid):
+  def batch(self, bid, hot_one=True):
     # Return the bid-th minibatch.
     # Batch IDs start with 0 and are consecutive.
     # Throws an error if the minibatch does not exist.
     if bid >= self.nbatches():
       raise ValueError('Cannot retrieve batch %i from %i batches' % (bid, self.nbatches()))
 
-    batchsize = self.bs
+    bs = self.bs
     if self.dataset.size() % self.bs and bid == self.nbatches() - 1:
-      batchsize = self.dataset.size() % self.bs
+      bs = self.dataset.size() % self.bs
 
-    start = self.bs * bid
+    st = self.bs * bid
+    tf = self.tform.apply
+    ix = self.indices[st:st+bs]
+
+    X = self.dataset.samples()[ix,:]
     
-    X = np.zeros((batchsize, *self.tform.apply(self.dataset.sample(0)).shape))    
-    y = np.zeros((batchsize), dtype=int)
-    ids = np.zeros((batchsize), dtype=int)
+    if self.tform:
+      X = self.tform.apply(X)
+    
+    if hot_one:
+      y = np_utils.to_categorical(self.dataset.classes()[ix], self.dataset.nclasses())
+    else:
+      y = self.dataset.classes()[ix]
 
-    for i in range(batchsize):
-      _id = self.indices[start + i]
-      if self.tform is not None:
-        X[i] = self.tform.apply(self.dataset.sample(_id))
-      else:
-        X[i] = self.dataset.sample(_id)
-      y[i] = self.dataset.sample_class(_id)
-      y[i] = y[i] if int(y[i]) in range(0, 10) else 1  # fix some errors in labels (gender labels)
-      ids[i] = _id
+    return X, y, ix
 
-    return X, y, ids
+class MiniBatchMultiLossGenerator(MiniBatchGenerator):
+
+  def batch(self, bid, hot_one=True):
+    # Return the bid-th minibatch.
+    # Batch IDs start with 0 and are consecutive.
+    # Throws an error if the minibatch does not exist.
+    if bid >= self.nbatches():
+      raise ValueError('Cannot retrieve batch %i from %i batches' % (bid, self.nbatches()))
+
+    bs = self.bs
+    if self.dataset.size() % self.bs and bid == self.nbatches() - 1:
+      bs = self.dataset.size() % self.bs
+
+    st = self.bs * bid
+    tf = self.tform.apply
+    ix = self.indices[st:st+bs]
+
+    X = self.dataset.samples()[ix,:]
+    
+    if self.tform:
+      X = self.tform.apply(X)
+
+    if hot_one:
+      y = [np_utils.to_categorical(yb[ix].astype(int), self.dataset.nclasses_per(i))
+            for i, yb in enumerate(self.dataset.classes())]
+    else:
+      y = [yb[ix].astype(int) for yb in self.dataset.classes()]
+
+    return X, y, ix

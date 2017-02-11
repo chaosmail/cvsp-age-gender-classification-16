@@ -3,9 +3,17 @@ from keras.regularizers import l2
 from keras.layers import *
 
 
-def get_vgg16(input_shape=(3,224,224), n_classes=10, weights_path=None, dropout=0.5,
-              init='glorot_uniform', activation='relu', l2_reg=0.0, fc6=4096, fc7=4096):
+def get_vgg16(params, weights_path=None):
   
+  input_shape = params.get('input_shape', (3,224,224))
+  activation = params.get('activation', 'relu')
+  l2_reg = params.get('l2_reg', 2e-4)
+  dropout = params.get('dropout', 0.5)
+  n_classes = params.get('n_classes', 10)
+  init = params.get('init', 'glorot_uniform')
+  fc6 = params.get('fc6', 4096)
+  fc7 = params.get('fc7', 4096)
+
   model = Sequential()
   
   model.add(InputLayer(input_shape=input_shape))

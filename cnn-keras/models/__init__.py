@@ -1,4 +1,5 @@
 from .vgg_16 import *
+from .levinet import *
 from .googlenet import *
 from .simple_cnn import *
 

@@ -22,11 +22,11 @@ VAL_DATA_OBJ = 'val_data'
 TEST_DATA_OBJ = 'test_data'
 
 # Define the number of samples per split
-train_samples = 10000
+train_samples = 5000
 val_samples = 1000
 test_samples = 1000
 
-INPUT_DIM = (3,48,48)
+INPUT_DIM = (3,112,112)
 
 TRAIN_TEST_SPLIT = 0.8
 TRAIN_VAL_SPLIT = 0.9
