@@ -5,7 +5,7 @@ from keras.models import load_model
 from keras.optimizers import SGD
 from models.googlenet_custom_layers import PoolHelper, LRN
 
-from transformation import *
+from transformation import get_normalization_transform
 
 ageAndGenderModel = None  # global variable that holds the loaded model
 
@@ -57,9 +57,7 @@ def classify_image(image, model=None, means=[0.45008409, 0.37675238, 0.3356632],
             exit()
         model = ageAndGenderModel  # take the standard model because nothing is passed
 
-    # image = image.transpose((2,1,0)) / 255  # don't forget to map to 0..1:
-
-    sample = preprocess_image(image, means=means, stds=stds, dims=(112, 112, 3), out_shape=(3, 112, 112))
+    sample = preprocess_image(image, means=means, stds=stds, dims=(112, 112, 3))
 
     # Expand the sample (3,112,112) to batch dimension (1,3,112,112)
     X = np.expand_dims(sample, axis=0)
@@ -96,9 +94,12 @@ def load_classifier(model_path='ageGenderModel.h5'):
         model = load_model(model_path, custom_objects={'LRN':LRN})
         # print(" Input shape: %s, %i classes" % (
         #   str(model.layers[0].batch_input_shape[1:]), model.layers[-1].output_dim))
-        learning_rate = 1e-2
-        opt = SGD(lr=learning_rate, momentum=0.9, nesterov=True)
-        model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+
+        # We dont need to compile (init) the model but only evaluate it
+        # learning_rate = 1e-2
+        # opt = SGD(lr=learning_rate, momentum=0.9, nesterov=True)
+        # model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
+        
         global ageAndGenderModel
         ageAndGenderModel = model
         return model
@@ -121,7 +122,7 @@ def set_classifier(model):
     ageAndGenderModel = model
 
 
-def preprocess_image(sample, means=None, stds=None, dims=None, out_shape=None):
+def preprocess_image(sample, means=None, stds=None, dims=None):
     """
     Internally used method for preprocessing an image which should be classified.
     The image is: resized, casted to float, the mean is subtracted, it is divided by the std and the
@@ -132,38 +133,19 @@ def preprocess_image(sample, means=None, stds=None, dims=None, out_shape=None):
         means: the means to subtract from the image
         stds: the standard deviation which is used to normalize the image
         dims: the image dimensions (should be 112x112x3)
-        out_shape: the image dimensions after reshaping (should be 3x112x112)
 
     Returns: the preprocessed image
     """
 
     # print("Preprocessing image ...")
     # print(" Transformations in order:")
-    tform = TransformationSequence()
-
-    if dims is not None:
-        t = ResizeTransformation(dims)
-        tform.add_transformation(t)
-        # print("  %s" % t.__class__.__name__)
-
-    t = FloatCastTransformation()
-    tform.add_transformation(t)
-    # print("  %s" % t.__class__.__name__)
-
-    if means is not None:
-        t = PerChannelSubtractionImageTransformation(np.array(means, dtype=np.float32))
-        tform.add_transformation(t)
-        # print("  %s (%s)" % (t.__class__.__name__, str(t.values())))
-
-    if stds is not None:
-        t = PerChannelDivisionImageTransformation(np.array(stds, dtype=np.float32))
-        tform.add_transformation(t)
-        # print("  %s (%s)" % (t.__class__.__name__, str(t.values())))
-
-    if out_shape is not None:
-        t = ReshapeTransformation(out_shape)
-        tform.add_transformation(t)
-        # print("  %s %s" % (t.__class__.__name__, str(t.value())))
+    tform = get_normalization_transform(
+      means=means,
+      stds=stds,
+      transpose_to=(2,1,0),
+      normalize=True,
+      verbose=False
+    )
 
     sample = tform.apply(sample)
     # print(" Result: shape: %s, dtype: %s, mean: %.3f, std: %.3f" % (
@@ -231,3 +213,6 @@ def load_image(image_path):
         print('Failed loading image %s' % image_path)
         exit()
     return img_data
+
+if __name__ == '__main__':
+    demo_classification()
