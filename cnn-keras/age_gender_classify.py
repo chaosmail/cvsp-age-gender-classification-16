@@ -58,6 +58,7 @@ def classify_image(image, model=None, means=[0.45008409, 0.37675238, 0.3356632],
         model = ageAndGenderModel  # take the standard model because nothing is passed
 
     # image = image.transpose((2,1,0)) / 255  # don't forget to map to 0..1:
+
     sample = preprocess_image(image, means=means, stds=stds, dims=(112, 112, 3), out_shape=(3, 112, 112))
 
     # Expand the sample (3,112,112) to batch dimension (1,3,112,112)
